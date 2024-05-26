@@ -7,15 +7,16 @@ int main(int argc, char *argv[])
 	Chunk chunk;
 	initChunk(&chunk);
 
-	int constant = addConstant(&chunk, 1.2);
-	writeChunk(&chunk, OP_CONSTANT, 123);
-	writeChunk(&chunk, constant, 123);
-	writeChunk(&chunk, OP_RETURN, 123);
-	writeChunk(&chunk, OP_RETURN, 124);
-	writeChunk(&chunk, OP_RETURN, 125);
-	writeChunk(&chunk, OP_RETURN, 126);
-	writeChunk(&chunk, OP_RETURN, 126);
-	writeChunk(&chunk, OP_RETURN, 126);
+	for (int i = 0; i < 300; i++)
+	{
+		writeConstant(&chunk, i + .2, i);
+	}
+	writeChunk(&chunk, OP_RETURN, 524);
+	writeChunk(&chunk, OP_RETURN, 524);
+	writeChunk(&chunk, OP_RETURN, 525);
+	writeChunk(&chunk, OP_RETURN, 526);
+	writeChunk(&chunk, OP_RETURN, 526);
+	writeChunk(&chunk, OP_RETURN, 526);
 
 	dissassembleChunk(&chunk, "test chunk");
 	freeChunk(&chunk);
