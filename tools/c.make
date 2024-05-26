@@ -15,7 +15,7 @@ else
 	C_LANG :=
 endif
 
-CFLAGS += -Wall -Wextra -Werror -Wno-unused-parameter
+CFLAGS += -Wall -Wextra -Werror -Wno-unused-parameter -Wno-implicit-function-declaration
 
 # Mode configuration.
 ifeq ($(MODE),debug)

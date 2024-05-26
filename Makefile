@@ -22,6 +22,7 @@ BINOUT			= ./bin
 MAKEFLAGS 		+= --warn-undefined-variables
 MAKEFLAGS 		+= --no-builtin-rules
 MAKEFLAGS		+= --no-print-directory
+ARGS 			:=
 
 BOLD = \033[1m
 CLEAR = \033[0m
@@ -37,7 +38,7 @@ help: ## Display this help
 		/^##@/ { printf "$(BOLD)%s$(CLEAR)\n", substr($$0, 5); }' \
 		$(MAKEFILE_LIST)
 
-##@: Build/Run
+##@: Build targets
 
 all: clean clox  ## ALL, builds the world
 
@@ -53,13 +54,19 @@ ${BINOUT}:
 	@mkdir -p ${BINOUT}
 
 # Compile a debug build of clox.
-debug: ${BUILDOUT} ${BINOUT} ## Clean-up build artifacts
+debug: ${BUILDOUT} ${BINOUT} ## Builds cloxd (debug ON)
 	@echo -e "$(CYAN)--- debug...$(CLEAR)"
 	@$(MAKE) -f tools/c.make NAME=cloxd MODE=debug SOURCE_DIR=src
-	@cp build/cloxd ${BINOUT}/cloxd
+	@cp ${BUILDOUT}/cloxd ${BINOUT}/cloxd
 
 # Compile the C interpreter.
-clox: ${BUILDOUT} ${BINOUT} ## Clean-up build artifacts
+clox: ${BUILDOUT} ${BINOUT} ## Builds clox (release version)
 	@echo -e "$(CYAN)--- clox...$(CLEAR)"
 	@$(MAKE) -f tools/c.make NAME=clox MODE=release SOURCE_DIR=src
-	@cp build/clox ${BINOUT}/clox # For convenience, copy the interpreter to the top level.
+	@cp ${BUILDOUT}/clox ${BINOUT}/clox # For convenience, copy the interpreter to the top level.
+
+##@: Run targets
+.PHONY: run
+run: clox ## Runs clox. Use ARGS="" make run to pass arguments
+	@echo -e "$(CYAN)--- run ...$(CLEAR)"
+	${BINOUT}/clox $(ARGS)

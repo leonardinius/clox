@@ -1,9 +1,14 @@
 #include "common.h"
+#include "chunk.h"
+#include "debug.h"
 
 int main(int argc, char *argv[])
 {
-	int i;
-	for(i=0;i<argc;i++)
-		printf("main argv[%d]:%s\n",i,argv[i]);
+	Chunk chunk;
+	initChunk(&chunk);
+	writeChunk(&chunk, OP_RETURN);
+
+	dissassembleChunk(&chunk, "test chunk");
+	freeChunk(&chunk);
 	return 0;
 }
