@@ -44,7 +44,7 @@ all: clean clox  ## ALL, builds the world
 .PHONY: clean
 clean: ## Clean-up build artifacts
 	@echo -e "$(CYAN)--- clean...$(CLEAR)"
-	@go clean
+	@rm -rf ${BINOUT}
 	@rm -rf ${BUILDOUT}
 
 ${BUILDOUT}:
