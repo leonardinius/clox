@@ -16,13 +16,15 @@ void dissassembleChunk(const Chunk *chunk, const char *name)
 int dissassembleInstruction(const Chunk *chunk, int offset)
 {
     printf("%04d ", offset);
-    if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1])
+    int line = getLine(chunk, offset);
+    int prevLine = getLine(chunk, offset - 1);
+    if (offset > 0 && line == prevLine)
     {
         printf("   | ");
     }
     else
     {
-        printf("%4d ", chunk->lines[offset]);
+        printf("%4d ", line);
     }
 
     uint8_t instruction = chunk->code[offset];

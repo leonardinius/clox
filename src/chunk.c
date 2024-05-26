@@ -8,7 +8,7 @@ void initChunk(Chunk *chunk)
     chunk->count = 0;
     chunk->capacity = 0;
     chunk->code = NULL;
-    chunk->lines = NULL;
+    initLines(&chunk->lines);
     initValueArray(&chunk->constants);
 }
 
@@ -19,18 +19,17 @@ void writeChunk(Chunk *chunk, uint8_t byte, int line)
         int oldCapacity = chunk->capacity;
         chunk->capacity = GROW_CAPACITY(oldCapacity);
         chunk->code = GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
-        chunk->lines = GROW_ARRAY(int, chunk->lines, oldCapacity, chunk->capacity);
     }
 
     chunk->code[chunk->count] = byte;
-    chunk->lines[chunk->count] = line;
+    writeLines(&chunk->lines, chunk->count, line);
     chunk->count++;
 }
 
 void freeChunk(Chunk *chunk)
 {
     FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
-    FREE_ARRAY(uint8_t, chunk->lines, chunk->capacity);
+    freeLines(&chunk->lines);
     freeValueArray(&chunk->constants);
     initChunk(chunk);
 }
@@ -39,4 +38,9 @@ int addConstant(Chunk *chunk, Value value)
 {
     writeValueArray(&chunk->constants, value);
     return chunk->constants.count - 1;
+}
+
+int getLine(const Chunk *chunk, int offset)
+{
+    return getLineByOffset(&chunk->lines, offset);
 }
