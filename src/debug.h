@@ -5,6 +5,6 @@
 
 void dissassembleChunk(const Chunk *chunk, const char *name);
 
-int dissassembleInstruction(const Chunk *chunk, int offset);
+int disassembleInstruction(const Chunk *chunk, int offset);
 
 #endif

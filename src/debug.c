@@ -9,11 +9,11 @@ void dissassembleChunk(const Chunk *chunk, const char *name)
 
     for (int offset = 0; offset < chunk->count;)
     {
-        offset = dissassembleInstruction(chunk, offset);
+        offset = disassembleInstruction(chunk, offset);
     }
 }
 
-int dissassembleInstruction(const Chunk *chunk, int offset)
+int disassembleInstruction(const Chunk *chunk, int offset)
 {
     printf("%04d ", offset);
     int line = getLine(chunk, offset);
