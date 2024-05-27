@@ -5,8 +5,7 @@
 
 typedef uint32_t line_pos_t;
 
-typedef struct
-{
+typedef struct {
     int capacity;
     int count;
     // line[i] is a run encoded line information
