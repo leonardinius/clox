@@ -1,10 +1,10 @@
+#include "chunk.h"
+
 #include <stdlib.h>
 
-#include "chunk.h"
 #include "memory.h"
 
-void initChunk(Chunk *chunk)
-{
+void initChunk(Chunk *chunk) {
     chunk->count = 0;
     chunk->capacity = 0;
     chunk->code = NULL;
@@ -12,13 +12,12 @@ void initChunk(Chunk *chunk)
     initValueArray(&chunk->constants);
 }
 
-void writeChunk(Chunk *chunk, uint8_t byte, int line)
-{
-    if (chunk->capacity < chunk->count + 1)
-    {
+void writeChunk(Chunk *chunk, uint8_t byte, int line) {
+    if (chunk->capacity < chunk->count + 1) {
         int oldCapacity = chunk->capacity;
         chunk->capacity = GROW_CAPACITY(oldCapacity);
-        chunk->code = GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
+        chunk->code =
+            GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
     }
 
     chunk->code[chunk->count] = byte;
@@ -26,12 +25,10 @@ void writeChunk(Chunk *chunk, uint8_t byte, int line)
     chunk->count++;
 }
 
-void writeConstant(Chunk *chunk, Value value, int line)
-{
+void writeConstant(Chunk *chunk, Value value, int line) {
     writeValueArray(&chunk->constants, value);
     int constantOffset = chunk->constants.count - 1;
-    if (constantOffset < 256)
-    {
+    if (constantOffset < 256) {
         writeChunk(chunk, OP_CONSTANT, line);
         writeChunk(chunk, (uint8_t)(constantOffset), line);
         return;
@@ -45,15 +42,13 @@ void writeConstant(Chunk *chunk, Value value, int line)
     writeChunk(chunk, byte1, line);
 }
 
-void freeChunk(Chunk *chunk)
-{
+void freeChunk(Chunk *chunk) {
     FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
     freeLines(&chunk->lines);
     freeValueArray(&chunk->constants);
     initChunk(chunk);
 }
 
-int getLine(const Chunk *chunk, int offset)
-{
+int getLine(const Chunk *chunk, int offset) {
     return getLineByOffset(&chunk->lines, offset);
 }
