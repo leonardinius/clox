@@ -9,11 +9,11 @@ void dissassembleChunk(const Chunk *chunk, const char *name)
 
     for (int offset = 0; offset < chunk->count;)
     {
-        offset = dissassembleInstruction(chunk, offset);
+        offset = disassembleInstruction(chunk, offset);
     }
 }
 
-int dissassembleInstruction(const Chunk *chunk, int offset)
+int disassembleInstruction(const Chunk *chunk, int offset)
 {
     printf("%04d ", offset);
     int line = getLine(chunk, offset);
@@ -33,8 +33,29 @@ int dissassembleInstruction(const Chunk *chunk, int offset)
     case OP_CONSTANT:
         return constantInstruction("OP_CONSTANT", chunk, offset);
         break;
+
     case OP_CONSTANT_LONG:
         return constantLongInstruction("OP_CONSTANT_LONG", chunk, offset);
+        break;
+
+    case OP_ADD:
+        return simpleInstruction("OP_ADD", offset);
+        break;
+
+    case OP_SUBTRACT:
+        return simpleInstruction("OP_SUBTRACT", offset);
+        break;
+
+    case OP_MULTIPLY:
+        return simpleInstruction("OP_MULTIPLY", offset);
+        break;
+
+    case OP_DIVIDE:
+        return simpleInstruction("OP_DIVIDE", offset);
+        break;
+
+    case OP_NEGATE:
+        return simpleInstruction("OP_NEGATE", offset);
         break;
 
     case OP_RETURN:

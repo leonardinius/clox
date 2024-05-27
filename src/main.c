@@ -1,24 +1,23 @@
 #include "common.h"
 #include "chunk.h"
+#include "vm.h"
 #include "debug.h"
 
 int main(int argc, char *argv[])
 {
+	initVM();
 	Chunk chunk;
 	initChunk(&chunk);
 
-	for (int i = 0; i < 300; i++)
-	{
-		writeConstant(&chunk, i + .2, i);
-	}
-	writeChunk(&chunk, OP_RETURN, 524);
-	writeChunk(&chunk, OP_RETURN, 524);
-	writeChunk(&chunk, OP_RETURN, 525);
-	writeChunk(&chunk, OP_RETURN, 526);
-	writeChunk(&chunk, OP_RETURN, 526);
-	writeChunk(&chunk, OP_RETURN, 526);
+	writeConstant(&chunk, 1.3, 1);
+	writeChunk(&chunk, OP_NEGATE, 2);
+	writeConstant(&chunk, 4, 2);
+	writeChunk(&chunk, OP_MULTIPLY, 3);
+	writeChunk(&chunk, OP_RETURN, 3);
 
-	dissassembleChunk(&chunk, "test chunk");
+	printf("== interpret chunk==\n");
+	interpret(&chunk);
+	freeVM();
 	freeChunk(&chunk);
 	return 0;
 }
