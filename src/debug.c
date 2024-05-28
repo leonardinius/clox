@@ -4,7 +4,7 @@
 
 #include "value.h"
 
-void dissassembleChunk(const Chunk *chunk, const char *name) {
+void disassembleChunk(const Chunk *chunk, const char *name) {
     printf("== %s ==\n", name);
 
     for (int offset = 0; offset < chunk->count;) {

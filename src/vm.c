@@ -26,6 +26,9 @@ static InterpretResult run() {
         push(a op b);     \
     } while (false)
 
+#ifdef DEBUG_TRACE_EXECUTION
+    printf("\n== trace execution ==");
+#endif
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         printf(" ");
