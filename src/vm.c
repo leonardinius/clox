@@ -26,6 +26,9 @@ static InterpretResult run() {
         push(a op b);     \
     } while (false)
 
+#ifdef DEBUG_TRACE_EXECUTION
+    printf("\n== trace execution ==");
+#endif
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         printf(" ");
@@ -86,9 +89,21 @@ static InterpretResult run() {
 }
 
 InterpretResult interpret(const char *source) {
-    compile(source);
-    if (false) return run();
-    return INTERPRET_OK;
+    Chunk chunk;
+    initChunk(&chunk);
+
+    if (!compile(source, &chunk)) {
+        freeChunk(&chunk);
+        return INTERPRET_COMPILE_ERROR;
+    }
+
+    vm.chunk = &chunk;
+    vm.ip = vm.chunk->code;
+
+    InterpretResult result = run();
+
+    freeChunk(&chunk);
+    return result;
 }
 
 void push(Value value) {

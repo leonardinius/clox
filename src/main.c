@@ -12,7 +12,6 @@ static void repl() {
     for (;;) {
         printf("> ");
 
-        memset(line, 0, sizeof(line));
         if (!fgets(line, sizeof(line), stdin)) {
             printf("\n");
             break;
