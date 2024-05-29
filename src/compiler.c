@@ -103,7 +103,7 @@ static void literal();
 ParseRule rules[] = {
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},
     [TOKEN_BANG_EQUAL] = {NULL, NULL, PREC_NONE},
-    [TOKEN_BANG] = {NULL, NULL, PREC_NONE},
+    [TOKEN_BANG] = {unary, NULL, PREC_NONE},
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
     [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},
     [TOKEN_DOT] = {NULL, NULL, PREC_NONE},
@@ -192,6 +192,9 @@ static void unary() {
     switch (operatorType) {
         case TOKEN_MINUS:
             emitByte(OP_NEGATE);
+            break;
+        case TOKEN_BANG:
+            emitByte(OP_NOT);
             break;
         default: {
             printf("Fatal: unreachable unary operator type %d\n", operatorType);

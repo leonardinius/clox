@@ -60,6 +60,10 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
             return simpleInstruction("OP_DIVIDE", offset);
             break;
 
+        case OP_NOT:
+            return simpleInstruction("OP_NOT", offset);
+            break;
+
         case OP_NEGATE:
             return simpleInstruction("OP_NEGATE", offset);
             break;
