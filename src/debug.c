@@ -32,6 +32,42 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
             return constantLongInstruction("OP_CONSTANT_LONG", chunk, offset);
             break;
 
+        case OP_NIL:
+            return simpleInstruction("OP_NIL", offset);
+            break;
+
+        case OP_TRUE:
+            return simpleInstruction("OP_TRUE", offset);
+            break;
+
+        case OP_FALSE:
+            return simpleInstruction("OP_FALSE", offset);
+            break;
+
+        case OP_EQUAL:
+            return simpleInstruction("OP_EQUAL", offset);
+            break;
+
+        case OP_BANG_EQUAL:
+            return simpleInstruction("OP_BANG_EQUAL", offset);
+            break;
+
+        case OP_LESS:
+            return simpleInstruction("OP_LESS", offset);
+            break;
+
+        case OP_LESS_EQUAL:
+            return simpleInstruction("OP_LESS_EQUAL", offset);
+            break;
+
+        case OP_GREATER:
+            return simpleInstruction("OP_GREATER", offset);
+            break;
+
+        case OP_GREATER_EQUAL:
+            return simpleInstruction("OP_GREATER_EQUAL", offset);
+            break;
+
         case OP_ADD:
             return simpleInstruction("OP_ADD", offset);
             break;
@@ -46,6 +82,10 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
 
         case OP_DIVIDE:
             return simpleInstruction("OP_DIVIDE", offset);
+            break;
+
+        case OP_NOT:
+            return simpleInstruction("OP_NOT", offset);
             break;
 
         case OP_NEGATE:
