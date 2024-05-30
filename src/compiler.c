@@ -102,7 +102,7 @@ static void grouping();
 static void literal();
 ParseRule rules[] = {
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},
-    [TOKEN_BANG_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},
     [TOKEN_BANG] = {unary, NULL, PREC_NONE},
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
     [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},
@@ -110,20 +110,20 @@ ParseRule rules[] = {
     [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},
     [TOKEN_FALSE] = {literal, NULL, PREC_NONE},
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
-    [TOKEN_EQUAL_EQUAL] = {NULL, NULL, PREC_NONE},
     [TOKEN_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_EQUAL_EQUAL] = {NULL, binary, PREC_EQUALITY},
+    [TOKEN_GREATER] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_LESS] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
     [TOKEN_FOR] = {NULL, NULL, PREC_NONE},
     [TOKEN_FUN] = {NULL, NULL, PREC_NONE},
-    [TOKEN_GREATER_EQUAL] = {NULL, NULL, PREC_NONE},
-    [TOKEN_GREATER] = {NULL, NULL, PREC_NONE},
     [TOKEN_IDENTIFIER] = {NULL, NULL, PREC_NONE},
     [TOKEN_IF] = {NULL, NULL, PREC_NONE},
     [TOKEN_NIL] = {literal, NULL, PREC_NONE},
     [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},
     [TOKEN_LEFT_PAREN] = {grouping, NULL, PREC_NONE},
-    [TOKEN_LESS_EQUAL] = {NULL, NULL, PREC_NONE},
-    [TOKEN_LESS] = {NULL, NULL, PREC_NONE},
     [TOKEN_MINUS] = {unary, binary, PREC_TERM},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
     [TOKEN_OR] = {NULL, NULL, PREC_NONE},
@@ -232,6 +232,24 @@ static void binary() {
             break;
         case TOKEN_SLASH:
             emitByte(OP_DIVIDE);
+            break;
+        case TOKEN_BANG_EQUAL:
+            emitByte(OP_BANG_EQUAL);
+            break;
+        case TOKEN_EQUAL_EQUAL:
+            emitByte(OP_EQUAL);
+            break;
+        case TOKEN_LESS:
+            emitByte(OP_LESS);
+            break;
+        case TOKEN_LESS_EQUAL:
+            emitByte(OP_LESS_EQUAL);
+            break;
+        case TOKEN_GREATER:
+            emitByte(OP_GREATER);
+            break;
+        case TOKEN_GREATER_EQUAL:
+            emitByte(OP_GREATER_EQUAL);
             break;
         default: {
             printf("Fatal: unreachable binary operator type %d\n",

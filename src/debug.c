@@ -44,6 +44,30 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
             return simpleInstruction("OP_FALSE", offset);
             break;
 
+        case OP_EQUAL:
+            return simpleInstruction("OP_EQUAL", offset);
+            break;
+
+        case OP_BANG_EQUAL:
+            return simpleInstruction("OP_BANG_EQUAL", offset);
+            break;
+
+        case OP_LESS:
+            return simpleInstruction("OP_LESS", offset);
+            break;
+
+        case OP_LESS_EQUAL:
+            return simpleInstruction("OP_LESS_EQUAL", offset);
+            break;
+
+        case OP_GREATER:
+            return simpleInstruction("OP_GREATER", offset);
+            break;
+
+        case OP_GREATER_EQUAL:
+            return simpleInstruction("OP_GREATER_EQUAL", offset);
+            break;
+
         case OP_ADD:
             return simpleInstruction("OP_ADD", offset);
             break;
