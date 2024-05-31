@@ -4,6 +4,31 @@
 
 #include "value.h"
 
+int constantInstruction(const char *name, const Chunk *chunk, int offset) {
+    uint8_t constantOffset = chunk->code[offset + 1];
+    printf("%-16s %4d '", name, constantOffset);
+    printValue(chunk->constants.values[constantOffset]);
+    printf("'\n");
+    return offset + 2;
+}
+
+int constantLongInstruction(const char *name, const Chunk *chunk, int offset) {
+    uint8_t constantOffsetByte3 = chunk->code[offset + 1];
+    uint8_t constantOffsetByte2 = chunk->code[offset + 2];
+    uint8_t constantOffsetByte1 = chunk->code[offset + 3];
+    uint32_t constantOffset = (constantOffsetByte3 << 16) |
+                              (constantOffsetByte2 << 8) |
+                              (constantOffsetByte1);
+    printf("%-16s %4d '", name, constantOffset);
+    printValue(chunk->constants.values[constantOffset]);
+    printf("'\n");
+    return offset + 4;
+}
+
+int simpleInstruction(const char *name, int offset) {
+    printf("%s\n", name);
+    return offset + 1;
+}
 void disassembleChunk(const Chunk *chunk, const char *name) {
     printf("== %s ==\n", name);
 
@@ -101,30 +126,4 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
             return offset + 1;
             break;
     }
-}
-
-int constantInstruction(const char *name, const Chunk *chunk, int offset) {
-    uint8_t constantOffset = chunk->code[offset + 1];
-    printf("%-16s %4d '", name, constantOffset);
-    printValue(chunk->constants.values[constantOffset]);
-    printf("'\n");
-    return offset + 2;
-}
-
-int constantLongInstruction(const char *name, const Chunk *chunk, int offset) {
-    uint8_t constantOffsetByte3 = chunk->code[offset + 1];
-    uint8_t constantOffsetByte2 = chunk->code[offset + 2];
-    uint8_t constantOffsetByte1 = chunk->code[offset + 3];
-    uint32_t constantOffset = (constantOffsetByte3 << 16) |
-                              (constantOffsetByte2 << 8) |
-                              (constantOffsetByte1);
-    printf("%-16s %4d '", name, constantOffset);
-    printValue(chunk->constants.values[constantOffset]);
-    printf("'\n");
-    return offset + 4;
-}
-
-int simpleInstruction(const char *name, int offset) {
-    printf("%s\n", name);
-    return offset + 1;
 }

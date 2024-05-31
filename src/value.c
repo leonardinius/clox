@@ -1,16 +1,17 @@
+
 #include "value.h"
 
 #include <stdlib.h>
 
 #include "memory.h"
 
-void initValueArray(ValueArray *valueArray) {
+void initValueArray(ValueArray* valueArray) {
     valueArray->count = 0;
     valueArray->capacity = 0;
     valueArray->values = NULL;
 }
 
-void writeValueArray(ValueArray *valueArray, Value value) {
+void writeValueArray(ValueArray* valueArray, Value value) {
     if (valueArray->capacity < valueArray->count + 1) {
         int oldCapacity = valueArray->capacity;
         valueArray->capacity = GROW_CAPACITY(oldCapacity);
@@ -21,9 +22,17 @@ void writeValueArray(ValueArray *valueArray, Value value) {
     valueArray->values[valueArray->count++] = value;
 }
 
-void freeValueArray(ValueArray *valueArray) {
+void freeValueArray(ValueArray* valueArray) {
     FREE_ARRAY(Value, valueArray->values, valueArray->capacity);
     initValueArray(valueArray);
+}
+
+void printObject(Value value) {
+    switch (OBJ_TYPE(value)) {
+        case OBJ_STRING:
+            printf("%s", AS_CSTRING(value));
+            break;
+    }
 }
 
 void printValue(Value value) {
@@ -37,6 +46,8 @@ void printValue(Value value) {
         case VAL_NUMBER:
             printf("%g", AS_NUMBER(value));
             break;
+        case VAL_OBJ:
+            printObject(value);
     }
 }
 
@@ -52,4 +63,27 @@ bool valuesEqual(Value a, Value b) {
         default:
             return false;  // Unreachable.
     }
+}
+
+#define ALLOCATE_OBJ(type, objectType) \
+    (type*)allocateObject(sizeof(type), objectType)
+
+static Obj* allocateObject(size_t size, ObjType type) {
+    Obj* object = (Obj*)reallocate(NULL, 0, size);
+    object->type = type;
+    return object;
+}
+
+static ObjString* allocateString(char* chars, int length) {
+    ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+    string->length = length;
+    string->chars = chars;
+    return string;
+}
+
+ObjString* copyString(const char* chars, int length) {
+    char* heapChars = ALLOCATE(char, length + 1);
+    memcpy(heapChars, chars, length);
+    heapChars[length] = '\0';
+    return allocateString(heapChars, length);
 }
