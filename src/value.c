@@ -2,6 +2,7 @@
 #include "value.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "memory.h"
 
@@ -53,6 +54,7 @@ void printValue(Value value) {
 
 bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
+
     switch (a.type) {
         case VAL_BOOL:
             return AS_BOOL(a) == AS_BOOL(b);
@@ -60,8 +62,16 @@ bool valuesEqual(Value a, Value b) {
             return true;
         case VAL_NUMBER:
             return AS_NUMBER(a) == AS_NUMBER(b);
+        case VAL_OBJ: {
+            ObjString* aString = AS_STRING(a);
+            ObjString* bString = AS_STRING(b);
+            return aString->length == bString->length &&
+                   memcmp(aString->chars, bString->chars, aString->length) == 0;
+        }
         default:
-            return false;  // Unreachable.
+            // Unreachable.
+            printf("Fatal: unreachable == operator type %d\n", a.type);
+            exit(1);
     }
 }
 
@@ -86,4 +96,8 @@ ObjString* copyString(const char* chars, int length) {
     memcpy(heapChars, chars, length);
     heapChars[length] = '\0';
     return allocateString(heapChars, length);
+}
+
+ObjString* takeString(char* chars, int length) {
+    return allocateString(chars, length);
 }
