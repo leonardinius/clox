@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "memory.h"
+#include "vm.h"
 
 void initValueArray(ValueArray* valueArray) {
     valueArray->count = 0;
@@ -81,6 +82,9 @@ bool valuesEqual(Value a, Value b) {
 static Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
+
+    object->next = (struct Obj*)vm.objects;
+    vm.objects = object;
     return object;
 }
 
