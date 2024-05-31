@@ -1,16 +1,19 @@
+
 #include "value.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "memory.h"
+#include "vm.h"
 
-void initValueArray(ValueArray *valueArray) {
+void initValueArray(ValueArray* valueArray) {
     valueArray->count = 0;
     valueArray->capacity = 0;
     valueArray->values = NULL;
 }
 
-void writeValueArray(ValueArray *valueArray, Value value) {
+void writeValueArray(ValueArray* valueArray, Value value) {
     if (valueArray->capacity < valueArray->count + 1) {
         int oldCapacity = valueArray->capacity;
         valueArray->capacity = GROW_CAPACITY(oldCapacity);
@@ -21,9 +24,17 @@ void writeValueArray(ValueArray *valueArray, Value value) {
     valueArray->values[valueArray->count++] = value;
 }
 
-void freeValueArray(ValueArray *valueArray) {
+void freeValueArray(ValueArray* valueArray) {
     FREE_ARRAY(Value, valueArray->values, valueArray->capacity);
     initValueArray(valueArray);
+}
+
+void printObject(Value value) {
+    switch (OBJ_TYPE(value)) {
+        case OBJ_STRING:
+            printf("%s", AS_CSTRING(value));
+            break;
+    }
 }
 
 void printValue(Value value) {
@@ -37,11 +48,14 @@ void printValue(Value value) {
         case VAL_NUMBER:
             printf("%g", AS_NUMBER(value));
             break;
+        case VAL_OBJ:
+            printObject(value);
     }
 }
 
 bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
+
     switch (a.type) {
         case VAL_BOOL:
             return AS_BOOL(a) == AS_BOOL(b);
@@ -49,7 +63,43 @@ bool valuesEqual(Value a, Value b) {
             return true;
         case VAL_NUMBER:
             return AS_NUMBER(a) == AS_NUMBER(b);
+        case VAL_OBJ: {
+            ObjString* aString = AS_STRING(a);
+            ObjString* bString = AS_STRING(b);
+            return aString->length == bString->length &&
+                   memcmp(aString->chars, bString->chars, aString->length) == 0;
+        }
         default:
-            return false;  // Unreachable.
+            // Unreachable.
+            printf("Fatal: unreachable == operator type %d\n", a.type);
+            exit(1);
     }
+}
+
+#define ALLOCATE_OBJ(type, objectType) \
+    (type*)allocateObject(sizeof(type), objectType)
+
+static Obj* allocateObject(size_t size, ObjType type) {
+    Obj* object = (Obj*)reallocate(NULL, 0, size);
+    object->type = type;
+
+    object->next = (struct Obj*)vm.objects;
+    vm.objects = object;
+    return object;
+}
+
+ObjString* makeString(int length) {
+    ObjString* string =
+        (ObjString*)allocateObject(sizeof(ObjString) + length + 1, OBJ_STRING);
+    string->length = length;
+    return string;
+}
+
+ObjString* copyString(const char* chars, int length) {
+    ObjString* string = makeString(length);
+
+    memcpy(string->chars, chars, length);
+    string->chars[length] = '\0';
+
+    return string;
 }
