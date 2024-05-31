@@ -15,7 +15,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     int length;
-    char *chars;
+    char chars[];
 } ObjString;
 
 typedef enum { VAL_BOOL, VAL_NIL, VAL_NUMBER, VAL_OBJ } ValueType;
@@ -65,8 +65,8 @@ static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 
+ObjString *makeString(int length);
 ObjString *copyString(const char *chars, int length);
-ObjString *takeString(char *chars, int length);
 void printObject(Value value);
 
 #endif
