@@ -15,6 +15,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     int length;
+    uint32_t hash;
     char chars[];
 } ObjString;
 
@@ -66,7 +67,9 @@ static inline bool isObjType(Value value, ObjType type) {
 }
 
 ObjString *makeString(int length);
+ObjString *takeString(const char *chars, int length, uint32_t hash);
 ObjString *copyString(const char *chars, int length);
+uint32_t hashString(const char *key, int length);
 void printObject(Value value);
 
 #endif
