@@ -76,23 +76,31 @@ static void errorAtCurrent(const char* message) {
 
 static void error(const char* message) { errorAt(&parser.previous, message); }
 
+static bool check(TokenType type) { return parser.current.type == type; }
+
 static void advance() {
     parser.previous = parser.current;
     for (;;) {
         parser.current = scanToken();
-        if (parser.current.type != TOKEN_ERROR) break;
+        if (!check(TOKEN_ERROR)) break;
 
         errorAtCurrent(parser.current.start);
     }
 }
 
 static void consume(TokenType tokenType, const char* message) {
-    if (parser.current.type == tokenType) {
+    if (check(tokenType)) {
         advance();
         return;
     }
 
     errorAtCurrent(message);
+}
+
+static bool match(TokenType type) {
+    if (!check(type)) return false;
+    advance();
+    return true;
 }
 
 static void binary();
@@ -101,6 +109,8 @@ static void number();
 static void grouping();
 static void literal();
 static void string();
+static void statement();
+static void declaration();
 ParseRule rules[] = {
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},
     [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},
@@ -144,6 +154,10 @@ ParseRule rules[] = {
     [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
 };
 
+static void emitByte(uint8_t byte) {
+    writeChunk(currentChunk(), byte, parser.previous.line);
+}
+
 static ParseRule* getRule(TokenType type) { return &rules[type]; }
 
 static void parsePrecedence(Precedence presedence) {
@@ -165,9 +179,19 @@ static void parsePrecedence(Precedence presedence) {
 
 static void expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
-static void emitByte(uint8_t byte) {
-    writeChunk(currentChunk(), byte, parser.previous.line);
+static void printStatement() {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+    emitByte(OP_PRINT);
 }
+
+static void statement() {
+    if (match(TOKEN_PRINT)) {
+        printStatement();
+    }
+}
+
+static void declaration() { statement(); }
 
 static void emitConstant(Value value) {
     writeConstant(currentChunk(), value, parser.previous.line);
@@ -289,8 +313,11 @@ bool compile(const char* source, Chunk* chunk) {
     compilingChunk = chunk;
     initParser(&parser);
     advance();
-    expression();
-    consume(TOKEN_EOF, "Expect end of expression.");
+
+    while (!match(TOKEN_EOF)) {
+        declaration();
+    }
+
     endCompiler();
 
     return !parser.hadError;

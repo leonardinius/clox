@@ -117,6 +117,10 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
             return simpleInstruction("OP_NEGATE", offset);
             break;
 
+        case OP_PRINT:
+            return simpleInstruction("OP_PRINT", offset);
+            break;
+
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
             break;
