@@ -273,8 +273,14 @@ static void string() {
 }
 
 static void namedVariable(Token name) {
-    emitByte(OP_GET_GLOBAL);
-    identifierConstant(&name);
+    if (match(TOKEN_EQUAL)) {
+        expression();
+        emitByte(OP_SET_GLOBAL);
+        identifierConstant(&name);
+    } else {
+        emitByte(OP_GET_GLOBAL);
+        identifierConstant(&name);
+    }
 }
 
 static void variable() { namedVariable(parser.previous); }
