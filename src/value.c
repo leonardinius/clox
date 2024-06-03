@@ -63,12 +63,8 @@ bool valuesEqual(Value a, Value b) {
             return true;
         case VAL_NUMBER:
             return AS_NUMBER(a) == AS_NUMBER(b);
-        case VAL_OBJ: {
-            ObjString* aString = AS_STRING(a);
-            ObjString* bString = AS_STRING(b);
-            return aString->length == bString->length &&
-                   memcmp(aString->chars, bString->chars, aString->length) == 0;
-        }
+        case VAL_OBJ:
+            return AS_OBJ(a) == AS_OBJ(b);
         default:
             // Unreachable.
             printf("Fatal: unreachable == operator type %d\n", a.type);
@@ -88,6 +84,15 @@ static Obj* allocateObject(size_t size, ObjType type) {
     return object;
 }
 
+uint32_t hashString(const char* key, int length) {
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < length; i++) {
+        hash ^= (uint8_t)key[i];
+        hash *= 16777619;
+    }
+    return hash;
+}
+
 ObjString* makeString(int length) {
     ObjString* string =
         (ObjString*)allocateObject(sizeof(ObjString) + length + 1, OBJ_STRING);
@@ -95,11 +100,20 @@ ObjString* makeString(int length) {
     return string;
 }
 
-ObjString* copyString(const char* chars, int length) {
-    ObjString* string = makeString(length);
+ObjString* takeString(const char* chars, int length, uint32_t hash) {
+    ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
+    if (interned != NULL) return interned;
 
+    ObjString* string = makeString(length);
     memcpy(string->chars, chars, length);
     string->chars[length] = '\0';
+    string->hash = hash;
+    tableSet(&vm.strings, string, NIL_VAL);
 
     return string;
+}
+
+ObjString* copyString(const char* chars, int length) {
+    uint32_t hash = hashString(chars, length);
+    return takeString(chars, length, hash);
 }

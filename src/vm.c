@@ -16,9 +16,13 @@ static void resetStack() { vm.stackTop = vm.stack; }
 void initVM() {
     resetStack();
     vm.objects = NULL;
+    initTable(&vm.strings);
 }
 
-void freeVM() {}
+void freeVM() {
+    freeTable(&vm.strings);
+    freeObjects();
+}
 
 static void runtimeError(const char *format, ...) {
     va_list args;
@@ -54,11 +58,20 @@ static void contatenate() {
     ObjString *a = AS_STRING(pop());
 
     int length = a->length + b->length;
-    ObjString *result = makeString(length);
-    memcpy(result->chars, a->chars, a->length);
-    memcpy(result->chars + a->length, b->chars, b->length);
-    result->chars[length] = '\0';
+    char *chars = ALLOCATE(char, length);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    uint32_t hash = hashString(chars, length);
 
+    ObjString *interned = tableFindString(&vm.strings, chars, length, hash);
+    if (interned != NULL) {
+        FREE_ARRAY(char, chars, length);
+        push(OBJ_VAL(interned));
+        return;
+    }
+
+    ObjString *result = takeString(chars, length, hash);
+    tableSet(&vm.strings, result, NIL_VAL);
     push(OBJ_VAL(result));
 }
 
