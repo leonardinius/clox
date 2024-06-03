@@ -69,6 +69,28 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
             return simpleInstruction("OP_FALSE", offset);
             break;
 
+        case OP_POP:
+            return simpleInstruction("OP_POP", offset);
+            break;
+
+        case OP_GET_GLOBAL: {
+            uint8_t nextInstruction = chunk->code[offset + 1];
+            if (nextInstruction == OP_CONSTANT)
+                return constantInstruction("OP_GET_GLOBAL", chunk, offset + 1);
+            return constantLongInstruction("OP_GET_GLOBAL", chunk, offset + 1);
+            break;
+        }
+
+        case OP_DEFINE_GLOBAL: {
+            uint8_t nextInstruction = chunk->code[offset + 1];
+            if (nextInstruction == OP_CONSTANT)
+                return constantInstruction("OP_DEFINE_GLOBAL", chunk,
+                                           offset + 1);
+            return constantLongInstruction("OP_DEFINE_GLOBAL", chunk,
+                                           offset + 1);
+            break;
+        }
+
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
             break;
