@@ -1,6 +1,7 @@
 #include "debug.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "value.h"
 
@@ -23,6 +24,26 @@ int constantLongInstruction(const char *name, const Chunk *chunk, int offset) {
     printValue(chunk->constants.values[constantOffset]);
     printf("'\n");
     return offset + 4;
+}
+
+int constantVariableInstruction(const char *name, const Chunk *chunk,
+                                int offset) {
+    uint8_t constInstrunction = chunk->code[offset + 1];
+    switch (constInstrunction) {
+        case OP_CONSTANT:
+            return constantInstruction(name, chunk, offset + 1);
+            break;
+
+        case OP_CONSTANT_LONG:
+            return constantLongInstruction(name, chunk, offset + 1);
+            break;
+
+        default:
+            printf("Fatal: Unknown constant instruction %d\n",
+                   constInstrunction);
+            exit(1);
+            break;
+    }
 }
 
 int simpleInstruction(const char *name, int offset) {
@@ -67,6 +88,23 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
 
         case OP_FALSE:
             return simpleInstruction("OP_FALSE", offset);
+            break;
+
+        case OP_POP:
+            return simpleInstruction("OP_POP", offset);
+            break;
+
+        case OP_GET_GLOBAL:
+            return constantVariableInstruction("OP_GET_GLOBAL", chunk, offset);
+            break;
+
+        case OP_SET_GLOBAL:
+            return constantVariableInstruction("OP_SET_GLOBAL", chunk, offset);
+            break;
+
+        case OP_DEFINE_GLOBAL:
+            return constantVariableInstruction("OP_DEFINE_GLOBAL", chunk,
+                                               offset);
             break;
 
         case OP_EQUAL:
@@ -115,6 +153,10 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
 
         case OP_NEGATE:
             return simpleInstruction("OP_NEGATE", offset);
+            break;
+
+        case OP_PRINT:
+            return simpleInstruction("OP_PRINT", offset);
             break;
 
         case OP_RETURN:
