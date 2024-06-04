@@ -25,23 +25,6 @@ void writeChunk(Chunk *chunk, uint8_t byte, int line) {
     chunk->count++;
 }
 
-void writeConstant(Chunk *chunk, Value value, int line) {
-    writeValueArray(&chunk->constants, value);
-    int constantOffset = chunk->constants.count - 1;
-    if (constantOffset < 256) {
-        writeChunk(chunk, OP_CONSTANT, line);
-        writeChunk(chunk, (uint8_t)(constantOffset), line);
-        return;
-    }
-    writeChunk(chunk, OP_CONSTANT_LONG, line);
-    uint8_t byte1 = constantOffset & 0xff;
-    uint8_t byte2 = (constantOffset >> 8) & 0xff;
-    uint8_t byte3 = (constantOffset >> 16) & 0xff;
-    writeChunk(chunk, byte3, line);
-    writeChunk(chunk, byte2, line);
-    writeChunk(chunk, byte1, line);
-}
-
 void freeChunk(Chunk *chunk) {
     FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
     freeLines(&chunk->lines);
@@ -51,4 +34,9 @@ void freeChunk(Chunk *chunk) {
 
 int getLine(const Chunk *chunk, int offset) {
     return getLineByOffset(&chunk->lines, offset);
+}
+
+int addConstant(Chunk *chunk, Value value) {
+    writeValueArray(&chunk->constants, value);
+    return chunk->constants.count - 1;
 }

@@ -80,12 +80,7 @@ static void contatenate() {
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define READ_CONSTANT_LONG() \
-    (vm.chunk->constants     \
-         .values[(READ_BYTE() << 16) | (READ_BYTE() << 8) | (READ_BYTE())])
-#define READ_STRING()                                        \
-    AS_STRING((READ_BYTE() == OP_CONSTANT) ? READ_CONSTANT() \
-                                           : READ_CONSTANT_LONG())
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op)                          \
     do {                                                  \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -118,12 +113,6 @@ static InterpretResult run() {
                 break;
             }
 
-            case OP_CONSTANT_LONG: {
-                Value constant = READ_CONSTANT_LONG();
-                push(constant);
-                break;
-            }
-
             case OP_NIL:
                 push(NIL_VAL);
                 break;
@@ -140,6 +129,25 @@ static InterpretResult run() {
                 pop();
                 break;
 
+            case OP_GET_LOCAL: {
+                uint8_t slot = READ_BYTE();
+                push(vm.stack[slot]);
+                break;
+            }
+
+            case OP_SET_LOCAL: {
+                uint8_t slot = READ_BYTE();
+                vm.stack[slot] = peek(0);
+                break;
+            }
+
+            case OP_DEFINE_GLOBAL: {
+                ObjString *name = READ_STRING();
+                tableSet(&vm.globals, name, peek(0));
+                pop();
+                break;
+            }
+
             case OP_GET_GLOBAL: {
                 ObjString *name = READ_STRING();
                 Value value;
@@ -154,16 +162,10 @@ static InterpretResult run() {
             case OP_SET_GLOBAL: {
                 ObjString *name = READ_STRING();
                 if (tableSet(&vm.globals, name, peek(0))) {
-                    tableDelete(&vm.globals, name);
+                    tableDelete(&vm.globals, name);  // [delete]
                     runtimeError("Undefined variable '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                break;
-            }
-
-            case OP_DEFINE_GLOBAL: {
-                ObjString *name = READ_STRING();
-                tableSet(&vm.globals, name, peek(0));
                 break;
             }
 
@@ -249,7 +251,6 @@ static InterpretResult run() {
     return INTERPRET_OK;
 #undef READ_BYTE
 #undef READ_CONSTANT
-#undef READ_CONSTANT_LONG
 #undef READ_STRING
 #undef BINARY_OP
 }
