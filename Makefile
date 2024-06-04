@@ -40,7 +40,7 @@ help: ## Display this help
 
 ##@: Build targets
 
-all: clean clox  ## ALL, builds the world
+all: clean clox cloxd ## ALL, builds the world
 
 .PHONY: clean
 clean: ## Clean-up build artifacts
@@ -53,20 +53,25 @@ ${BUILDOUT}:
 ${BINOUT}:
 	@mkdir -p ${BINOUT}
 
-# Compile a debug build of clox.
-debug: ${BUILDOUT} ${BINOUT} ## Builds cloxd (debug ON)
-	@echo -e "$(CYAN)--- debug...$(CLEAR)"
-	@$(MAKE) -f tools/c.make NAME=cloxd MODE=debug SOURCE_DIR=src
-	@cp ${BUILDOUT}/cloxd ${BINOUT}/cloxd
-
 # Compile the C interpreter.
 clox: ${BUILDOUT} ${BINOUT} ## Builds clox (release version)
 	@echo -e "$(CYAN)--- clox...$(CLEAR)"
 	@$(MAKE) -f tools/c.make NAME=clox MODE=release SOURCE_DIR=src
 	@cp ${BUILDOUT}/clox ${BINOUT}/clox # For convenience, copy the interpreter to the top level.
 
+# Compile a debug build of clox.
+cloxd: ${BUILDOUT} ${BINOUT} ## Builds cloxd (debug ON).
+	@echo -e "$(CYAN)--- debug...$(CLEAR)"
+	@$(MAKE) -f tools/c.make NAME=cloxd MODE=debug SOURCE_DIR=src
+	@cp ${BUILDOUT}/cloxd ${BINOUT}/cloxd
+
 ##@: Run targets
 .PHONY: run
 run: clox ## Runs clox. Use ARGS="" make run to pass arguments
-	@echo -e "$(CYAN)--- run ...$(CLEAR)"
+	@echo -e "$(CYAN)--- run clox ...$(CLEAR)"
 	${BINOUT}/clox $(ARGS)
+
+.PHONY: debug
+debug: cloxd ## Runs cloxd (debug ON). Use ARGS="" make run to pass arguments
+	@echo -e "$(CYAN)--- run cloxd ...$(CLEAR)"
+	${BINOUT}/cloxd $(ARGS)
