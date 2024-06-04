@@ -39,7 +39,19 @@ typedef struct {
     Precedence precedence;
 } ParseRule;
 
+typedef struct {
+    Token name;
+    int depth;
+} Local;
+
+typedef struct {
+    Local locals[UINT8_COUNT];
+    int localCount;
+    int scoreDepth;
+} Compiler;
+
 Parser parser;
+Compiler* current = NULL;
 Chunk* compilingChunk;
 Chunk* currentChunk() { return compilingChunk; }
 
@@ -50,6 +62,12 @@ static void initParser(Parser* parser) {
 
     parser->hadError = false;
     parser->panicMode = false;
+}
+
+static void initCompiler(Compiler* compiler) {
+    compiler->localCount = 0;
+    compiler->scoreDepth = 0;
+    current = compiler;
 }
 
 static void errorAt(Token* token, const char* message) {
@@ -110,6 +128,9 @@ static void grouping(bool canAssign);
 static void literal(bool canAssign);
 static void string(bool canAssign);
 static void variable(bool canAssign);
+// other forward declarations
+static void statement();
+static void declaration();
 ParseRule rules[] = {
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},
     [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},
@@ -245,9 +266,24 @@ static void expressionStatement() {
     emitByte(OP_POP);
 }
 
+static void beginScope() { current->scoreDepth++; }
+
+static void endScope() { current->scoreDepth--; }
+
+static void block() {
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        declaration();
+    }
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+}
+
 static void statement() {
     if (match(TOKEN_PRINT)) {
         printStatement();
+    } else if (match(TOKEN_LEFT_BRACE)) {
+        beginScope();
+        block();
+        endScope();
     } else {
         expressionStatement();
     }
@@ -393,6 +429,8 @@ static void literal(bool canAssign) {
 
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
+    Compiler compiler;
+    initCompiler(&compiler);
     compilingChunk = chunk;
     initParser(&parser);
     advance();
