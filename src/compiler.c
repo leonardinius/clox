@@ -129,11 +129,13 @@ static void grouping(bool canAssign);
 static void literal(bool canAssign);
 static void string(bool canAssign);
 static void variable(bool canAssign);
+static void and_(bool canAssign);
+static void or_(bool canAssign);
 // other forward declarations
 static void statement();
 static void declaration();
 ParseRule rules[] = {
-    [TOKEN_AND] = {NULL, NULL, PREC_NONE},
+    [TOKEN_AND] = {NULL, and_, PREC_AND},
     [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},
     [TOKEN_BANG] = {unary, NULL, PREC_NONE},
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
@@ -158,7 +160,7 @@ ParseRule rules[] = {
     [TOKEN_LEFT_PAREN] = {grouping, NULL, PREC_NONE},
     [TOKEN_MINUS] = {unary, binary, PREC_TERM},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
-    [TOKEN_OR] = {NULL, NULL, PREC_NONE},
+    [TOKEN_OR] = {NULL, or_, PREC_OR},
     [TOKEN_PLUS] = {NULL, binary, PREC_TERM},
     [TOKEN_PRINT] = {NULL, NULL, PREC_NONE},
     [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
@@ -312,6 +314,26 @@ static void defineVariable(uint8_t global) {
         return;
     }
     emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+static void and_(bool canAssign) {
+    int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+    emitByte(OP_POP);
+    parsePrecedence(PREC_AND);
+
+    patchJump(endJump);
+}
+
+static void or_(bool canAssign) {
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    int endJump = emitJump(OP_JUMP);
+
+    patchJump(elseJump);
+    emitByte(OP_POP);
+
+    parsePrecedence(PREC_OR);
+    patchJump(endJump);
 }
 
 static void expression() { parsePrecedence(PREC_ASSIGNMENT); }
