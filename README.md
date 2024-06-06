@@ -10,3 +10,5 @@
 - [x] ch 19 1/3 - make strings to use flexible array members
 - [ ] TODO: ch 21 - 2/3 - move global variables to array values by index;
 - [ ] TODO: ch 22 - 4/4 - extend clox to allow more than 256 local variables to be in scope at a time.
+- [ ] TODO: ch 23 - add separate instruction for OR shortcircuit.
+- [ ] TODO: ch 23 - 2/3 - add break; continue;
