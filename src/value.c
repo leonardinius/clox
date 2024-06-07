@@ -29,8 +29,25 @@ void freeValueArray(ValueArray* valueArray) {
     initValueArray(valueArray);
 }
 
+static void printFunction(ObjFunction* function) {
+    if (function->name == NULL) {
+        printf("<script>");
+        return;
+    }
+
+    printf("<fn %s>", function->name->chars);
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
+        case OBJ_FUNCTION:
+            printFunction(AS_FUNCTION(value));
+            break;
+
+        case OBJ_NATIVE:
+            printf("<native fn>");
+            break;
+
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));
             break;
@@ -72,9 +89,6 @@ bool valuesEqual(Value a, Value b) {
     }
 }
 
-#define ALLOCATE_OBJ(type, objectType) \
-    (type*)allocateObject(sizeof(type), objectType)
-
 static Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
@@ -83,6 +97,26 @@ static Obj* allocateObject(size_t size, ObjType type) {
     vm.objects = object;
     return object;
 }
+
+#define ALLOCATE_OBJ(type, objectType) \
+    (type*)allocateObject(sizeof(type), objectType)
+
+ObjFunction* newFunction() {
+    ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
+    Chunk* chunk = ALLOCATE(Chunk, 1);
+    function->chunk = (void*)chunk;
+    function->arity = 0;
+    function->name = NULL;
+    initChunk((Chunk*)function->chunk);
+    return function;
+}
+
+ObjNative* newNative(NativeFn function) {
+    ObjNative* native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
+    native->function = function;
+    return native;
+}
+
 uint32_t hashString(const char* key, int length) {
     uint32_t hash = 2166136261u;
     for (int i = 0; i < length; i++) {
