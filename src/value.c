@@ -55,6 +55,10 @@ void printObject(Value value) {
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));
             break;
+
+        case OBJ_UPVALUE:
+            printf("upvalue");
+            break;
     }
 }
 
@@ -106,8 +110,15 @@ static Obj* allocateObject(size_t size, ObjType type) {
     (type*)allocateObject(sizeof(type), objectType)
 
 ObjClosure* newClosure(ObjFunction* function) {
+    ObjUpvalue** upvalues = ALLOCATE(ObjUpvalue*, function->upvalueCount);
+    for (int i = 0; i < function->upvalueCount; i++) {
+        upvalues[i] = NULL;
+    }
+
     ObjClosure* closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
     closure->function = function;
+    closure->upvalues = upvalues;
+    closure->upvalueCount = function->upvalueCount;
     return closure;
 }
 
@@ -116,6 +127,7 @@ ObjFunction* newFunction() {
     Chunk* chunk = ALLOCATE(Chunk, 1);
     function->chunk = (void*)chunk;
     function->arity = 0;
+    function->upvalueCount = 0;
     function->name = NULL;
     initChunk((Chunk*)function->chunk);
     return function;
@@ -159,4 +171,10 @@ ObjString* takeString(const char* chars, int length, uint32_t hash) {
 ObjString* copyString(const char* chars, int length) {
     uint32_t hash = hashString(chars, length);
     return takeString(chars, length, hash);
+}
+
+ObjUpvalue* newUpvalue(Value* slot) {
+    ObjUpvalue* upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
+    upvalue->location = slot;
+    return upvalue;
 }
