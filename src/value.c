@@ -29,6 +29,26 @@ void freeValueArray(ValueArray* valueArray) {
     initValueArray(valueArray);
 }
 
+const char* objTypeToString(ObjType type) {
+    static char buffer[256];
+
+    switch (type) {
+        case OBJ_FUNCTION:
+            return "OBJ_FUNCTION";
+        case OBJ_NATIVE:
+            return "OBJ_NATIVE";
+        case OBJ_STRING:
+            return "OBJ_STRING";
+        case OBJ_UPVALUE:
+            return "OBJ_UPVALUE";
+        case OBJ_CLOSURE:
+            return "OBJ_CLOSURE";
+        default:
+            sprintf(buffer, "unknown %d", type);
+            return buffer;
+    }
+}
+
 static void printFunction(ObjFunction* function) {
     if (function->name == NULL) {
         printf("<script>");
@@ -100,9 +120,14 @@ bool valuesEqual(Value a, Value b) {
 static Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
+    object->isMarked = false;
 
     object->next = (struct Obj*)vm.objects;
     vm.objects = object;
+#ifdef DEBUG_LOG_GC
+    printf("%p allocate %zu for %s\n", (void*)object, size,
+           objTypeToString(type));
+#endif
     return object;
 }
 
@@ -179,4 +204,14 @@ ObjUpvalue* newUpvalue(Value* slot) {
     upvalue->next = NULL;
     upvalue->closed = NIL_VAL;
     return upvalue;
+}
+
+void markObject(Obj* object) {
+    if (object == NULL) return;
+#ifdef DEBUG_LOG_GC
+    printf("%p mark [%s] ", (void*)object, objTypeToString(object->type));
+    printValue(OBJ_VAL(object));
+    printf("\n");
+#endif
+    object->isMarked = true;
 }

@@ -15,6 +15,7 @@ typedef enum {
 
 typedef struct {
     ObjType type;
+    bool isMarked;
     struct Obj *next;
 } Obj;
 
@@ -113,5 +114,7 @@ ObjString *copyString(const char *chars, int length);
 ObjUpvalue *newUpvalue(Value *slot);
 uint32_t hashString(const char *key, int length);
 void printObject(Value value);
+const char *objTypeToString(ObjType type);
+void markObject(Obj *object);
 
 #endif
