@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "memory.h"
-#include "vm.h"
 
 void initChunk(Chunk *chunk) {
     chunk->count = 0;
@@ -38,8 +37,6 @@ int getLine(const Chunk *chunk, int offset) {
 }
 
 int addConstant(Chunk *chunk, Value value) {
-    push(value);
     writeValueArray(&chunk->constants, value);
-    pop();
     return chunk->constants.count - 1;
 }

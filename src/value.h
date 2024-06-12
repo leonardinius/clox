@@ -37,8 +37,8 @@ typedef struct {
 typedef struct {
     Obj obj;
     int length;
-    char *chars;
     uint32_t hash;
+    char chars[];
 } ObjString;
 
 typedef struct {
@@ -51,7 +51,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     int arity;
-    struct Chunk *chunk;
+    void *chunk;
     ObjString *name;
     int upvalueCount;
 } ObjFunction;
@@ -109,9 +109,10 @@ ObjClosure *newClosure(ObjFunction *function);
 ObjFunction *newFunction();
 ObjNative *newNative(NativeFn function);
 ObjString *makeString(int length);
-ObjString *takeString(char *chars, int length);
+ObjString *takeString(const char *chars, int length, uint32_t hash);
 ObjString *copyString(const char *chars, int length);
 ObjUpvalue *newUpvalue(Value *slot);
+uint32_t hashString(const char *key, int length);
 void printObject(Value value);
 const char *objTypeToString(ObjType type);
 void markObject(Obj *object);
