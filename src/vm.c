@@ -34,6 +34,12 @@ static void defineNative(const char *name, NativeFn function) {
 void initVM() {
     resetStack();
     vm.objects = NULL;
+    vm.bytesAllocated = 0;
+    vm.nextGC = 1024 * 1024;
+    vm.grayCount = 0;
+    vm.grayCapacity = 0;
+    vm.grayStack = NULL;
+
     initTable(&vm.globals);
     initTable(&vm.strings);
 
@@ -159,24 +165,18 @@ static bool isFalsey(Value value) {
 }
 
 static void contatenate() {
-    ObjString *b = AS_STRING(pop());
-    ObjString *a = AS_STRING(pop());
+    ObjString *b = AS_STRING(peek(0));
+    ObjString *a = AS_STRING(peek(1));
 
     int length = a->length + b->length;
-    char *chars = ALLOCATE(char, length);
+    char *chars = ALLOCATE(char, length + 1);
     memcpy(chars, a->chars, a->length);
     memcpy(chars + a->length, b->chars, b->length);
-    uint32_t hash = hashString(chars, length);
+    chars[length] = '\0';
 
-    ObjString *interned = tableFindString(&vm.strings, chars, length, hash);
-    if (interned != NULL) {
-        FREE_ARRAY(char, chars, length);
-        push(OBJ_VAL(interned));
-        return;
-    }
-
-    ObjString *result = takeString(chars, length, hash);
-    tableSet(&vm.strings, result, NIL_VAL);
+    ObjString *result = takeString(chars, length);
+    pop();
+    pop();
     push(OBJ_VAL(result));
 }
 
@@ -446,6 +446,7 @@ InterpretResult interpret(const char *source) {
     if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
     push(OBJ_VAL(function));
+
     ObjClosure *closure = newClosure(function);
     pop();
     push(OBJ_VAL(closure));
