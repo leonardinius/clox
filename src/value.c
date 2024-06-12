@@ -29,6 +29,26 @@ void freeValueArray(ValueArray* valueArray) {
     initValueArray(valueArray);
 }
 
+const char* objTypeToString(ObjType type) {
+    static char buffer[256];
+
+    switch (type) {
+        case OBJ_FUNCTION:
+            return "OBJ_FUNCTION";
+        case OBJ_NATIVE:
+            return "OBJ_NATIVE";
+        case OBJ_STRING:
+            return "OBJ_STRING";
+        case OBJ_UPVALUE:
+            return "OBJ_UPVALUE";
+        case OBJ_CLOSURE:
+            return "OBJ_CLOSURE";
+        default:
+            sprintf(buffer, "unknown %d", type);
+            return buffer;
+    }
+}
+
 static void printFunction(ObjFunction* function) {
     if (function->name == NULL) {
         printf("<script>");
@@ -100,9 +120,14 @@ bool valuesEqual(Value a, Value b) {
 static Obj* allocateObject(size_t size, ObjType type) {
     Obj* object = (Obj*)reallocate(NULL, 0, size);
     object->type = type;
+    object->isMarked = false;
 
     object->next = (struct Obj*)vm.objects;
     vm.objects = object;
+#ifdef DEBUG_LOG_GC
+    printf("%p allocate %zu for %s\n", (void*)object, size,
+           objTypeToString(type));
+#endif
     return object;
 }
 
@@ -124,7 +149,13 @@ ObjClosure* newClosure(ObjFunction* function) {
 
 ObjFunction* newFunction() {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
-    Chunk* chunk = ALLOCATE(Chunk, 1);
+    Chunk* chunk = NULL;
+    chunk = (Chunk*)realloc(chunk, sizeof(Chunk));
+    if (chunk == NULL) {
+        printf("vm: not enough memory for newFunction chunk\n");
+        exit(1);
+    }
+
     function->chunk = (void*)chunk;
     function->arity = 0;
     function->upvalueCount = 0;
@@ -160,10 +191,12 @@ ObjString* takeString(const char* chars, int length, uint32_t hash) {
     if (interned != NULL) return interned;
 
     ObjString* string = makeString(length);
+    push(OBJ_VAL(string));
     memcpy(string->chars, chars, length);
     string->chars[length] = '\0';
     string->hash = hash;
     tableSet(&vm.strings, string, NIL_VAL);
+    pop();
 
     return string;
 }
@@ -179,4 +212,28 @@ ObjUpvalue* newUpvalue(Value* slot) {
     upvalue->next = NULL;
     upvalue->closed = NIL_VAL;
     return upvalue;
+}
+
+void markObject(Obj* object) {
+    if (object == NULL) return;
+    if (object->isMarked) return;
+
+#ifdef DEBUG_LOG_GC
+    printf("%p mark [%s] ", (void*)object, objTypeToString(object->type));
+    printValue(OBJ_VAL(object));
+    printf("\n");
+#endif
+    object->isMarked = true;
+
+    if (vm.grayCapacity < vm.grayCount + 1) {
+        vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
+        vm.grayStack =
+            (Obj**)realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
+
+        if (vm.grayStack == NULL) {
+            printf("vm: not enough memory for grayStack\n");
+            exit(1);
+        }
+    }
+    vm.grayStack[vm.grayCount++] = object;
 }

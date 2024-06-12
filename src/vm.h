@@ -21,8 +21,14 @@ typedef struct {
     Value *stackTop;
     Table globals;
     Table strings;
-    Obj *objects;
     ObjUpvalue *openUpvalues;
+
+    size_t bytesAllocated;
+    size_t nextGC;
+    int grayCount;
+    int grayCapacity;
+    Obj *objects;
+    Obj **grayStack;
 } VM;
 
 extern VM vm;
