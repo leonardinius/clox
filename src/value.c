@@ -191,10 +191,12 @@ ObjString* takeString(const char* chars, int length, uint32_t hash) {
     if (interned != NULL) return interned;
 
     ObjString* string = makeString(length);
+    push(OBJ_VAL(string));
     memcpy(string->chars, chars, length);
     string->chars[length] = '\0';
     string->hash = hash;
     tableSet(&vm.strings, string, NIL_VAL);
+    pop();
 
     return string;
 }
