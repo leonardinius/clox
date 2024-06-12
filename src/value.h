@@ -51,7 +51,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     int arity;
-    void *chunk;
+    struct Chunk *chunk;
     ObjString *name;
     int upvalueCount;
 } ObjFunction;

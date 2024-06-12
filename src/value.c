@@ -149,7 +149,13 @@ ObjClosure* newClosure(ObjFunction* function) {
 
 ObjFunction* newFunction() {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
-    Chunk* chunk = ALLOCATE(Chunk, 1);
+    Chunk* chunk = NULL;
+    chunk = (Chunk*)realloc(chunk, sizeof(Chunk));
+    if (chunk == NULL) {
+        printf("vm: not enough memory for newFunction chunk\n");
+        exit(1);
+    }
+
     function->chunk = (void*)chunk;
     function->arity = 0;
     function->upvalueCount = 0;
@@ -208,10 +214,24 @@ ObjUpvalue* newUpvalue(Value* slot) {
 
 void markObject(Obj* object) {
     if (object == NULL) return;
+    if (object->isMarked) return;
+
 #ifdef DEBUG_LOG_GC
     printf("%p mark [%s] ", (void*)object, objTypeToString(object->type));
     printValue(OBJ_VAL(object));
     printf("\n");
 #endif
     object->isMarked = true;
+
+    if (vm.grayCapacity < vm.grayCount + 1) {
+        vm.grayCapacity = GROW_CAPACITY(vm.grayCapacity);
+        vm.grayStack =
+            (Obj**)realloc(vm.grayStack, sizeof(Obj*) * vm.grayCapacity);
+
+        if (vm.grayStack == NULL) {
+            printf("vm: not enough memory for grayStack\n");
+            exit(1);
+        }
+    }
+    vm.grayStack[vm.grayCount++] = object;
 }
