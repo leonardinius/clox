@@ -54,6 +54,7 @@ typedef struct {
 typedef enum { TYPE_FUNCTION, TYPE_SCRIPT } FunctionType;
 
 typedef struct {
+    // forward struct declaration; pointer only.
     struct Compiler* enclosing;
     ObjFunction* function;
     FunctionType type;

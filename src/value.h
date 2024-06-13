@@ -19,6 +19,7 @@ typedef enum {
 typedef struct {
     ObjType type;
     bool isMarked;
+    // forward struct declaration; pointer only.
     struct Obj *next;
 } Obj;
 
@@ -48,12 +49,14 @@ typedef struct {
     Obj obj;
     Value *location;
     Value closed;
+    // forward struct declaration; pointer only.
     struct ObjUpvalue *next;
 } ObjUpvalue;
 
 typedef struct {
     Obj obj;
     int arity;
+    // forward struct declaration; On stack; sync or [X_X] segfault.
     struct Chunk {
         int count;
         int capacity;
@@ -87,6 +90,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     ObjClass *klass;
+    // forward struct declaration; On stack; sync or [X_X] segfault.
     struct Table {
         int count;
         int capacity;
