@@ -30,11 +30,13 @@ void freeValueArray(ValueArray* valueArray) {
 }
 
 const char* objTypeToString(ObjType type) {
-    static char buffer[256];
-
     switch (type) {
+        case OBJ_CLASS:
+            return "OBJ_CLASS";
         case OBJ_FUNCTION:
             return "OBJ_FUNCTION";
+        case OBJ_INSTANCE:
+            return "OBJ_INSTANCE";
         case OBJ_NATIVE:
             return "OBJ_NATIVE";
         case OBJ_STRING:
@@ -43,9 +45,6 @@ const char* objTypeToString(ObjType type) {
             return "OBJ_UPVALUE";
         case OBJ_CLOSURE:
             return "OBJ_CLOSURE";
-        default:
-            sprintf(buffer, "unknown %d", type);
-            return buffer;
     }
 }
 
@@ -60,12 +59,20 @@ static void printFunction(ObjFunction* function) {
 
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
+        case OBJ_CLASS:
+            printf("%s", AS_CLASS(value)->name->chars);
+            break;
+
         case OBJ_CLOSURE:
             printFunction(AS_CLOSURE(value)->function);
             break;
 
         case OBJ_FUNCTION:
             printFunction(AS_FUNCTION(value));
+            break;
+
+        case OBJ_INSTANCE:
+            printf("%s instance", AS_INSTANCE(value)->klass->name->chars);
             break;
 
         case OBJ_NATIVE:
@@ -97,6 +104,15 @@ void printValue(Value value) {
             printObject(value);
     }
 }
+
+#ifdef DEBUG_LOG_GC
+void printDebugObjectHeader(const char* message, Obj* object) {
+    printf("%p %-7s [%-12s] ", (void*)object, message,
+           objTypeToString(object->type));
+    printValue(OBJ_VAL(object));
+    printf("\n");
+}
+#endif
 
 bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
@@ -134,6 +150,12 @@ static Obj* allocateObject(size_t size, ObjType type) {
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
 
+ObjClass* newClass(ObjString* name) {
+    ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
+    klass->name = name;
+    return klass;
+}
+
 ObjClosure* newClosure(ObjFunction* function) {
     ObjUpvalue** upvalues = ALLOCATE(ObjUpvalue*, function->upvalueCount);
     for (int i = 0; i < function->upvalueCount; i++) {
@@ -149,19 +171,18 @@ ObjClosure* newClosure(ObjFunction* function) {
 
 ObjFunction* newFunction() {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
-    Chunk* chunk = NULL;
-    chunk = (Chunk*)realloc(chunk, sizeof(Chunk));
-    if (chunk == NULL) {
-        printf("vm: not enough memory for newFunction chunk\n");
-        exit(1);
-    }
-
-    function->chunk = (void*)chunk;
     function->arity = 0;
     function->upvalueCount = 0;
     function->name = NULL;
-    initChunk((Chunk*)function->chunk);
+    initChunk((Chunk*)&function->chunk);
     return function;
+}
+
+ObjInstance* newInstance(ObjClass* klass) {
+    ObjInstance* instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
+    instance->klass = klass;
+    initTable((Table*)&instance->fields);
+    return instance;
 }
 
 ObjNative* newNative(NativeFn function) {
@@ -219,9 +240,7 @@ void markObject(Obj* object) {
     if (object->isMarked) return;
 
 #ifdef DEBUG_LOG_GC
-    printf("%p mark [%s] ", (void*)object, objTypeToString(object->type));
-    printValue(OBJ_VAL(object));
-    printf("\n");
+    printDebugObjectHeader("mark", object);
 #endif
     object->isMarked = true;
 

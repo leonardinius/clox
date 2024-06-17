@@ -37,12 +37,15 @@ void *reallocate(void *pointer, size_t oldSize, size_t newSize) {
 
 static void freeObject(Obj *object) {
 #ifdef DEBUG_LOG_GC
-    printf("%p free [%s] ", (void *)object, objTypeToString(object->type));
-    printValue(OBJ_VAL(object));
-    printf("\n");
+    printDebugObjectHeader("free", object);
 #endif
 
     switch (object->type) {
+        case OBJ_CLASS: {
+            FREE(ObjClass, object);
+            break;
+        }
+
         case OBJ_CLOSURE: {
             ObjClosure *closure = (ObjClosure *)object;
             FREE_ARRAY(ObjUpvalue *, closure->upvalues, closure->upvalueCount);
@@ -53,10 +56,15 @@ static void freeObject(Obj *object) {
 
         case OBJ_FUNCTION: {
             ObjFunction *function = (ObjFunction *)object;
-            freeChunk((Chunk *)function->chunk);
-            free(function->chunk);
-            function->chunk = NULL;
+            freeChunk((Chunk *)&function->chunk);
             FREE(ObjFunction, object);
+            break;
+        }
+
+        case OBJ_INSTANCE: {
+            ObjInstance *instance = (ObjInstance *)object;
+            freeTable((Table *)&instance->fields);
+            FREE(ObjInstance, object);
             break;
         }
 
@@ -101,12 +109,16 @@ static void markArray(ValueArray *array) {
 
 static void blackenObject(Obj *object) {
 #ifdef DEBUG_LOG_GC
-    printf("%p blacken [%s] ", (void *)object, objTypeToString(object->type));
-    printValue(OBJ_VAL(object));
-    printf("\n");
+    printDebugObjectHeader("blacken", object);
 #endif
 
     switch (object->type) {
+        case OBJ_CLASS: {
+            ObjClass *klass = (ObjClass *)object;
+            markObject((Obj *)klass->name);
+            break;
+        }
+
         case OBJ_CLOSURE: {
             ObjClosure *closure = (ObjClosure *)object;
             markObject((Obj *)closure->function);
@@ -119,7 +131,14 @@ static void blackenObject(Obj *object) {
         case OBJ_FUNCTION: {
             ObjFunction *function = (ObjFunction *)object;
             markObject((Obj *)function->name);
-            markArray(&((Chunk *)function->chunk)->constants);
+            markArray(&function->chunk.constants);
+            break;
+        }
+
+        case OBJ_INSTANCE: {
+            ObjInstance *instance = (ObjInstance *)object;
+            markObject((Obj *)instance->klass);
+            markTable((Table *)&instance->fields);
             break;
         }
 
