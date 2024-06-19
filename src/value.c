@@ -31,6 +31,8 @@ void freeValueArray(ValueArray* valueArray) {
 
 const char* objTypeToString(ObjType type) {
     switch (type) {
+        case OBJ_BOUND_METHOD:
+            return "OBJ_BOUND_METHOD";
         case OBJ_CLASS:
             return "OBJ_CLASS";
         case OBJ_FUNCTION:
@@ -59,6 +61,10 @@ static void printFunction(ObjFunction* function) {
 
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
+        case OBJ_BOUND_METHOD:
+            printFunction(AS_BOUND_METHOD(value)->method->function);
+            break;
+
         case OBJ_CLASS:
             printf("%s", AS_CLASS(value)->name->chars);
             break;
@@ -150,9 +156,17 @@ static Obj* allocateObject(size_t size, ObjType type) {
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
 
+ObjBoundMethod* newBoundMethod(Value receiver, ObjClosure* method) {
+    ObjBoundMethod* bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
+    bound->receiver = receiver;
+    bound->method = method;
+    return bound;
+}
+
 ObjClass* newClass(ObjString* name) {
     ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     klass->name = name;
+    initTable((Table*)&klass->methods);
     return klass;
 }
 
