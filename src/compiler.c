@@ -51,7 +51,11 @@ typedef struct {
     bool isLocal;
 } Upvalue;
 
-typedef enum { TYPE_FUNCTION, TYPE_SCRIPT } FunctionType;
+typedef enum {
+    TYPE_FUNCTION,  //
+    TYPE_METHOD,
+    TYPE_SCRIPT
+} FunctionType;
 
 typedef struct {
     // forward struct declaration; pointer only.
@@ -67,8 +71,13 @@ typedef struct {
     int scopeDepth;
 } Compiler;
 
+typedef struct ClassCompiler {
+    struct ClassCompiler* enclosing;
+} ClassCompiler;
+
 Parser parser;
 Compiler* current = NULL;
+ClassCompiler* currentClass = NULL;
 Chunk* currentChunk() { return (Chunk*)&current->function->chunk; }
 
 static void initParser(Parser* parser) {
@@ -96,8 +105,13 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
     local->isCaptured = false;
-    local->name.start = "";
-    local->name.length = 0;
+    if (type == TYPE_METHOD) {
+        local->name.start = "this";
+        local->name.length = 4;
+    } else {
+        local->name.start = "";
+        local->name.length = 0;
+    }
 }
 
 static void errorAt(Token* token, const char* message) {
@@ -162,6 +176,7 @@ static void variable(bool canAssign);
 static void and_(bool canAssign);
 static void or_(bool canAssign);
 static void dot(bool canAssign);
+static void this_(bool canAssign);
 // other forward declarations
 static void statement();
 static void declaration();
@@ -202,7 +217,7 @@ ParseRule rules[] = {
     [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
     [TOKEN_SUPER] = {NULL, NULL, PREC_NONE},
-    [TOKEN_THIS] = {NULL, NULL, PREC_NONE},
+    [TOKEN_THIS] = {this_, NULL, PREC_NONE},
     [TOKEN_TRUE] = {literal, NULL, PREC_NONE},
     [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
     [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
@@ -640,7 +655,7 @@ static void function(FunctionType type) {
 static void method() {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifierConstant(&parser.previous);
-    FunctionType type = TYPE_FUNCTION;
+    FunctionType type = TYPE_METHOD;
     function(type);
     emitBytes(OP_METHOD, constant);
 }
@@ -672,6 +687,15 @@ static void variable(bool canAssign) {
     namedVariable(parser.previous, canAssign);
 }
 
+static void this_(bool canAssign) {
+    if (currentClass == NULL) {
+        error("Can't use 'this' outside of a class.");
+        return;
+    }
+
+    variable(false);
+}
+
 static void classDeclaration() {
     consume(TOKEN_IDENTIFIER, "Expect class name.");
     Token className = parser.previous;
@@ -681,12 +705,18 @@ static void classDeclaration() {
     emitBytes(OP_CLASS, nameConstant);
     namedVariable(className, false);
 
+    ClassCompiler classCompiler;
+    classCompiler.enclosing = currentClass;
+    currentClass = &classCompiler;
+
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
         method();
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
     emitByte(OP_POP);
+
+    currentClass = currentClass->enclosing;
 }
 
 static void funDeclaration() {
