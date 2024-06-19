@@ -703,12 +703,13 @@ static void classDeclaration() {
     declareVariable();
 
     emitBytes(OP_CLASS, nameConstant);
-    namedVariable(className, false);
+    defineVariable(nameConstant);
 
     ClassCompiler classCompiler;
     classCompiler.enclosing = currentClass;
     currentClass = &classCompiler;
 
+    namedVariable(className, false);
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
         method();
