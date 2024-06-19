@@ -20,7 +20,8 @@ void freeTable(Table* table) {
 }
 
 static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
-    uint32_t index = key->hash % capacity;
+    const uint32_t mask = capacity - 1;
+    uint32_t index = key->hash & mask;
     Entry* tombstone = NULL;
 
     for (;;) {
@@ -34,7 +35,7 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
         } else if (entry->key == key) {
             return entry;
         }
-        index = (index + 1) % capacity;
+        index = (index + 1) & mask;
     }
     printf("Fatal: unreachable findEntry exit reached\n");
     exit(1);
@@ -111,7 +112,8 @@ ObjString* tableFindString(Table* table, const char* chars, int length,
                            uint32_t hash) {
     if (table->count == 0) return NULL;
 
-    uint32_t index = hash % table->capacity;
+    const uint32_t mask = table->capacity - 1;
+    uint32_t index = hash & mask;
     for (;;) {
         Entry* entry = &table->entries[index];
         if (entry->key == NULL) {
@@ -125,7 +127,7 @@ ObjString* tableFindString(Table* table, const char* chars, int length,
             return entry->key;
         }
 
-        index = (index + 1) % table->capacity;
+        index = (index + 1) & mask;
     }
 }
 
