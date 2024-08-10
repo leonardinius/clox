@@ -26,8 +26,6 @@ typedef struct {
     struct Obj *next;
 } Obj;
 
-#ifdef NAN_BOXING
-
 #define QNAN ((uint64_t)0x7ffc000000000000)
 #define TAG_NIL 1    // 01.
 #define TAG_FALSE 2  // 10.
@@ -62,31 +60,6 @@ static inline Value numToValue(double num) {
     memcpy(&value, &num, sizeof(double));
     return value;
 }
-
-#else
-typedef struct {
-    ValueType type;
-    union {
-        bool boolean;
-        double number;
-        Obj *obj;
-    } as;
-} Value;
-
-#define IS_BOOL(value) ((value).type == VAL_BOOL)
-#define IS_NIL(value) ((value).type == VAL_NIL)
-#define IS_NUMBER(value) ((value).type == VAL_NUMBER)
-#define IS_OBJ(value) ((value).type == VAL_OBJ)
-
-#define AS_BOOL(value) ((value).as.boolean)
-#define AS_NUMBER(value) ((value).as.number)
-#define AS_OBJ(value) ((value).as.obj)
-#define BOOL_VAL(value) ((Value){VAL_BOOL, {.boolean = value}})
-#define NIL_VAL ((Value){VAL_NIL, {.number = 0}})
-#define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
-#define OBJ_VAL(value) ((Value){VAL_OBJ, {.obj = (Obj *)value}})
-
-#endif
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
