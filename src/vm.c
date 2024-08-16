@@ -281,7 +281,7 @@ static InterpretResult run() {
         push(valueType(a op b));                          \
     } while (false)
 #ifdef DEBUG_TRACE_EXECUTION
-    printf("\n== trace execution ==");
+    printf("\n== trace execution ==\n");
 #endif
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
