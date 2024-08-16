@@ -83,33 +83,43 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
 
         case OP_GET_LOCAL:
             return byteInstruction("OP_GET_LOCAL", chunk, offset);
+            break;
 
         case OP_SET_LOCAL:
             return byteInstruction("OP_SET_LOCAL", chunk, offset);
+            break;
 
         case OP_GET_GLOBAL:
             return constantInstruction("OP_GET_GLOBAL", chunk, offset);
+            break;
 
         case OP_DEFINE_GLOBAL:
             return constantInstruction("OP_DEFINE_GLOBAL", chunk, offset);
+            break;
 
         case OP_SET_GLOBAL:
             return constantInstruction("OP_SET_GLOBAL", chunk, offset);
+            break;
 
         case OP_GET_UPVALUE:
             return byteInstruction("OP_GET_UPVALUE", chunk, offset);
+            break;
 
         case OP_SET_UPVALUE:
             return byteInstruction("OP_SET_UPVALUE", chunk, offset);
+            break;
 
         case OP_GET_PROPERTY:
             return constantInstruction("OP_GET_PROPERTY", chunk, offset);
-
+            break;
+        
         case OP_SET_PROPERTY:
             return constantInstruction("OP_SET_PROPERTY", chunk, offset);
+            break;
 
         case OP_GET_SUPER:
             return constantInstruction("OP_GET_SUPER", chunk, offset);
+            break;
 
         case OP_EQUAL:
             return simpleInstruction("OP_EQUAL", offset);
@@ -178,12 +188,14 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
 
         case OP_CALL:
             return byteInstruction("OP_CALL", chunk, offset);
+            break;
 
         case OP_INVOKE:
             return invokeInstruction("OP_INVOKE", chunk, offset);
 
         case OP_SUPER_INVOKE:
             return invokeInstruction("OP_SUPER_INVOKE", chunk, offset);
+            break;
 
         case OP_CLOSURE: {
             offset++;
@@ -201,13 +213,14 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
                        offset - 2,                                 //
                        isLocal == 1 ? "local" : "upvalue",         //
                        index);
-
-                return offset;
             }
+            return offset;
+            break;
         }
 
         case OP_CLOSE_UPVALUE:
             return simpleInstruction("OP_CLOSE_UPVALUE", offset);
+            break;
 
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
@@ -215,6 +228,7 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
 
         case OP_CLASS:
             return constantInstruction("OP_CLASS", chunk, offset);
+            break;
 
         case OP_INHERIT:
             return simpleInstruction("OP_INHERIT", offset);
@@ -222,6 +236,7 @@ int disassembleInstruction(const Chunk *chunk, int offset) {
 
         case OP_METHOD:
             return constantInstruction("OP_METHOD", chunk, offset);
+            break;
 
         default:
             printf("Unknown opcode %d\n", instruction);
